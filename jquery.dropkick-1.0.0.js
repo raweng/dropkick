@@ -8,6 +8,10 @@
  *                        <http://twitter.com/JamieLottering>
  * 
  */
+ keyString="";
+dkArray = {};
+timeOutHandler={};
+timeOutValue=0;
 (function ($, window, document) {
 
   var msVersion = navigator.userAgent.match(/MSIE ([0-9]{1,}[\.0-9]{0,})/),
@@ -140,12 +144,65 @@
       lists[lists.length] = $select;
 
       // Focus events
-      $dk.bind('focus.dropkick', function (e) {
-        $dk.addClass('dk_focus');
-      }).bind('blur.dropkick', function (e) {
+       //     $dk.bind('focus.dropkick', function (e) {
+      //       $dk.addClass('dk_focus');
+      //     }).bind('blur.dropkick', function (e) {
+      //       $dk.removeClass('dk_open dk_focus');
+      //     });
+
+      //     setTimeout(function () {
+      //       $select.hide();
+      //     }, 0);
+      //   });
+      // };
+
+    $dk.bind('focus.dropkick', function (e) {
+          $dk.addClass('dk_focus');
+      });
+      $dk.bind('blur.dropkick', function (e) {
+          /*** IE moves focus from the .dk_container to .dk_options on scroll bar click ***/
+          if ($(document.activeElement).closest($dk).length > 0) {
+            $dk.focus();
+            return false;
+          }
         $dk.removeClass('dk_open dk_focus');
       });
+ if (settings.hide_on_mouseout) {
+        $dk.bind('mouseleave', function(e) {
+            _closeDropdown($dk);
+        });
+      }
 
+      //********************keypress option selection*****************************//
+      $dk.on('keypress',function(e){           
+      if(e.charCode != 0){
+        $("ul li",this).removeClass('dk_option_current');
+           keyString= keyString.concat(String.fromCharCode(e.charCode));
+          var selectId = ($(this).attr('id')).replace('dk_container_','');  
+          var aaa = '/^'+keyString+'/';
+          var arr = dkArray[selectId];
+          var firstIndex = -1;
+          $.each(arr,function(index,item){
+              if(item.value.toLowerCase().match(eval(aaa)))
+              {
+                  if(firstIndex == -1) firstIndex = index;
+              }
+          });
+          
+          document.getElementById(selectId).selectedIndex = firstIndex;
+           $("ul li:nth-child("+(firstIndex+1)+")",this).addClass('dk_option_current');
+           $($('.dk_options_inner'),this).scrollTop((30*firstIndex));
+           timeOutValue +=20;
+            if(keyString.length > 1){
+              timeOutHandler = setTimeout(function (){
+                  keyString = "";
+                  clearTimeout(timeOutHandler);
+                }, 1000);
+            }            
+        }
+        return false;
+  });
+//***********************************************************************************//
       setTimeout(function () {
         $select.hide();
       }, 0);
@@ -189,7 +246,7 @@
       if (methods[method]) {
         return methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
       } else if (typeof method === 'object' || ! method) {
-        return methods.init.apply(this, arguments);
+        return methods.init.apply(this, arguments);        
       }
     }
   };
@@ -197,7 +254,7 @@
   // private
   function _handleKeyBoardNav(e, $dk) {
     var
-      code     = e.keyCode,
+      code     = e.keyCode || e.charCode,
       data     = $dk.data('dropkick'),
       options  = $dk.find('.dk_options'),
       open     = $dk.hasClass('dk_open'),
@@ -207,7 +264,6 @@
       next,
       prev
     ;
-
     switch (code) {
       case keyMap.enter:
         if (open) {
@@ -219,6 +275,7 @@
         e.preventDefault();
       break;
 
+      case 38:
       case keyMap.up:
         prev = current.prev('li');
         if (open) {
@@ -233,8 +290,9 @@
         e.preventDefault();
       break;
 
+      case 40:
       case keyMap.down:
-        if (open) {
+         if (open) {
           next = current.next('li').first();
           if (next.length) {
             _setCurrent(next, $dk);
@@ -243,13 +301,14 @@
           }
         } else {
           _openDropdown($dk);
-        }
+        }        
         e.preventDefault();
       break;
 
       default:
       break;
     }
+    return false;
   }
 
   // Update the <select> value, and the dropdown label
@@ -276,7 +335,6 @@
   function _setCurrent($current, $dk) {
     $dk.find('.dk_option_current').removeClass('dk_option_current');
     $current.addClass('dk_option_current');
-
     _setScrollPos($dk, $current);
   }
 
@@ -290,12 +348,12 @@
     $dk.removeClass('dk_open');
   }
 
+
   // Open a dropdown
   function _openDropdown($dk) {
     var data = $dk.data('dropkick');
     $dk.find('.dk_options').css({ top : $dk.find('.dk_toggle').outerHeight() - 1 });
     $dk.toggleClass('dk_open');
-
   }
 
   /**
@@ -314,6 +372,7 @@
     template = template.replace('{{ label }}', view.label);
     template = template.replace('{{ tabindex }}', view.tabindex);
 
+    dkArray[view.id] = view.options;
     if (view.options && view.options.length) {
       for (var i = 0, l = view.options.length; i < l; i++) {
         var
@@ -332,7 +391,6 @@
 
     $dk = $(template);
     $dk.find('.dk_options_inner').html(options.join(''));
-
     return $dk;
   }
 
