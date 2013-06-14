@@ -182,9 +182,9 @@ scrollTo=-1;
                         document.getElementById(selectId).selectedIndex = firstIndex;
                         $curr = $("ul li:nth-child("+(firstIndex+1)+")",this);
                         _setCurrent($curr, $dk);//.addClass('dk_option_current');
-                        
+
                         $($('.dk_options_inner'),this).scrollTop((30*firstIndex));
-                        if(!($(this).hasClass('dk_open'))){    
+                        if(!($(this).hasClass('dk_open'))){
                             $('.dk_label',this).html($('a',$curr).html());
                             scrollTo = 30*firstIndex;
                         }
@@ -222,18 +222,26 @@ scrollTo=-1;
 
     // Reset all <selects and dropdowns in our lists array
     methods.reset = function () {
+        var thisId = [];
+        $.each(this,function(index,item){
+            thisId.push($(item).attr('id'));
+        })
+
         for (var i = 0, l = lists.length; i < l; i++) {
-            var
-                listData  = lists[i].data('dropkick'),
-                $dk       = listData.$dk,
-                $current  = $dk.find('li').first()
-                ;
 
-            $dk.find('.dk_label').text(listData.label);
-            $dk.find('.dk_options_inner').animate({ scrollTop: 0 }, 0);
+            if($.inArray($(lists[i]).attr('id'), thisId) != -1 ){
+                var
+                    listData  = lists[i].data('dropkick'),
+                    $dk       = listData.$dk,
+                    $current  = $dk.find('li').first()
+                    ;
 
-            _setCurrent($current, $dk);
-            _updateFields($current, $dk, true);
+                $dk.find('.dk_label').text(listData.label);
+                $dk.find('.dk_options_inner').animate({ scrollTop: 0 }, 0);
+
+                _setCurrent($current, $dk);
+                _updateFields($current, $dk, true);
+            }
         }
     };
 
@@ -461,3 +469,20 @@ scrollTo=-1;
         });
     });
 })(jQuery, window, document);
+
+$(document).click(function(){
+    $('.dk_open').removeClass('dk_open');
+});
+$(document).on('click','.dk_open',function (e) {
+    e.stopPropagation();
+});
+$(document).on('click','.dk_toggle',function (e) {
+
+    var $dk  = $(this).parents('.dk_container').first();
+
+    if ($.browser && $.browser.webkit ){
+        $('.dk_open').removeClass('dk_open');
+        $dk.toggleClass('dk_open');
+    }
+    return false;
+});
