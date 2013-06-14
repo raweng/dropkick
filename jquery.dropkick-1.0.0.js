@@ -12,6 +12,7 @@ keyString="";
 dkArray = {};
 timeOutHandler={};
 timeOutValue=0;
+scrollTo=-1;
 (function ($, window, document) {
 
     var msVersion = navigator.userAgent.match(/MSIE ([0-9]{1,}[\.0-9]{0,})/),
@@ -63,7 +64,7 @@ timeOutValue=0;
         },
 
     // Make sure we only bind keydown on the document once
-        keysBound = false
+        keysBound = true
         ;
 
     // Called by using $('foo').dropkick();
@@ -144,7 +145,7 @@ timeOutValue=0;
             lists[lists.length] = $select;
 
             // Focus events
-        
+
             $dk.bind('focus.dropkick', function (e) {
                 $dk.addClass('dk_focus');
             });
@@ -178,10 +179,15 @@ timeOutValue=0;
                                 if(firstIndex == -1) firstIndex = index;
                             }
                         });
-
                         document.getElementById(selectId).selectedIndex = firstIndex;
-                        $("ul li:nth-child("+(firstIndex+1)+")",this).addClass('dk_option_current');
+                        $curr = $("ul li:nth-child("+(firstIndex+1)+")",this);
+                        _setCurrent($curr, $dk);//.addClass('dk_option_current');
+                        
                         $($('.dk_options_inner'),this).scrollTop((30*firstIndex));
+                        if(!($(this).hasClass('dk_open'))){    
+                            $('.dk_label',this).html($('a',$curr).html());
+                            scrollTo = 30*firstIndex;
+                        }
                         timeOutValue +=20;
                         if(keyString.length > 1){
                             timeOutHandler = setTimeout(function (){
@@ -347,6 +353,10 @@ timeOutValue=0;
         var data = $dk.data('dropkick');
         $dk.find('.dk_options').css({ top : $dk.find('.dk_toggle').outerHeight() - 1 });
         $dk.toggleClass('dk_open');
+        if(scrollTo!=-1){
+            $dk.find('.dk_options_inner').animate({ scrollTop: scrollTo + 'px' }, 0);
+            scrollTo=-1;
+        }
     }
 
     /**
